@@ -24,13 +24,12 @@ jobs:
 
       - name: Build App Bundle
         run: |
-          # Perhatikan: kita membundel semua file yang dibutuhkan kode anda
           pyinstaller --noconsole --clean \
             --name="BroadcastControlPanel" \
             --icon="logo.icns" \
             --add-data "fa9520_devices.json:." \
             --add-data "logo.ico:." \
-            main_2.py
+            main.py
 
       - name: Compress and Upload
         run: |
