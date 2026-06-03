@@ -1,0 +1,53 @@
+name: Build macOS M1 App
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch: # Mengaktifkan tombol "Run workflow" manual di web GitHub
+
+jobs:
+  build-macos:
+    runs-on: macos-14 # Menggunakan Mac M1 asli milik GitHub Runner
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Menginstall requirements jika file tersebut ada
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          # Jika Anda menggunakan library eksternal (seperti PyQt/PySide/Pillow), 
+          # Anda bisa uncomment & tambahkan di bawah ini:
+          # pip install Pillow
+          pip install pyinstaller
+
+      - name: Build App Bundle with PyInstaller
+        run: |
+          # --icon=logo.icns memasang ikon langsung ke app bundle macOS
+          # --add-data menyertakan file JSON ke dalam aplikasi bundle
+          pyinstaller --noconsole --clean \
+            --name="BroadcastControlPanel" \
+            --icon=logo.icns \
+            --add-data "fa9520_devices.json:." \
+            main.py
+
+      - name: Compress App Bundle into Zip
+        run: |
+          cd dist
+          zip -r BroadcastControlPanel_macOS_M1.zip BroadcastControlPanel.app
+
+      - name: Upload Artifact to GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: BroadcastControlPanel-M1-Sonoma
+          path: dist/BroadcastControlPanel_macOS_M1.zip
