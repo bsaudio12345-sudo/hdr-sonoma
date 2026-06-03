@@ -1,16 +1,13 @@
 name: Build macOS M1 App
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
-  workflow_dispatch: # Mengaktifkan tombol "Run workflow" manual di web GitHub
 
 jobs:
   build-macos:
-    runs-on: macos-14 # Menggunakan Mac M1 asli milik GitHub Runner
-    
+    runs-on: macos-14
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -19,35 +16,29 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          # Menginstall requirements jika file tersebut ada
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          # Jika Anda menggunakan library eksternal (seperti PyQt/PySide/Pillow), 
-          # Anda bisa uncomment & tambahkan di bawah ini:
-          # pip install Pillow
-          pip install pyinstaller
+          pip install Pillow requests pyinstaller
 
-      - name: Build App Bundle with PyInstaller
+      - name: Build App Bundle
         run: |
-          # --icon=logo.icns memasang ikon langsung ke app bundle macOS
-          # --add-data menyertakan file JSON ke dalam aplikasi bundle
+          # Perhatikan: kita membundel semua file yang dibutuhkan kode anda
           pyinstaller --noconsole --clean \
             --name="BroadcastControlPanel" \
-            --icon=logo.icns \
+            --icon="logo.icns" \
             --add-data "fa9520_devices.json:." \
-            main.py
+            --add-data "logo.ico:." \
+            main_2.py
 
-      - name: Compress App Bundle into Zip
+      - name: Compress and Upload
         run: |
           cd dist
-          zip -r BroadcastControlPanel_macOS_M1.zip BroadcastControlPanel.app
-
-      - name: Upload Artifact to GitHub
+          zip -r BroadcastControlPanel_M1.zip BroadcastControlPanel.app
+          
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BroadcastControlPanel-M1-Sonoma
-          path: dist/BroadcastControlPanel_macOS_M1.zip
+          name: BroadcastControlPanel-M1
+          path: dist/BroadcastControlPanel_M1.zip
